@@ -170,6 +170,18 @@ function useAnyFieldHasValue(blockPath: string, fieldKeys: string[]) {
     if (!watchValues) return false;
     return fieldKeys.some((k) => {
       const v = watchValues?.[k];
+      if (v === undefined || v === null) return false;
+      if (typeof v === "string") return v.trim() !== "";
+      if (Array.isArray(v)) return v.length > 0;
+      return true;
+    });
+  }, [watchValues, fieldKeys]);
+} = useFormContext();
+  const watchValues = useWatch({ control, name: `${blockPath}.fields` });
+  return React.useMemo(() => {
+    if (!watchValues) return false;
+    return fieldKeys.some((k) => {
+      const v = watchValues?.[k];
       return !(v === undefined || v === null || String(v).trim() === "");
     });
   }, [watchValues, fieldKeys.join("")]);
@@ -296,7 +308,10 @@ export default function NestedFormBuilderDemo() {
   return (
     <Box sx={{ maxWidth: 960, mx: "auto", p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Form Builder (MUI + React Hook Form)
+        Nested Form Builder (MUI + React Hook Form)
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        • Sorted by <code>order</code> • Conditional required per block • Returns identical structure on submit
       </Typography>
       <SchemaForm schema={exampleSchema as Schema} />
     </Box>
