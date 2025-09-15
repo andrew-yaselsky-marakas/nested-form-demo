@@ -168,23 +168,16 @@ function useAnyFieldHasValue(blockPath: string, fieldKeys: string[]) {
   const watchValues = useWatch({ control, name: `${blockPath}.fields` });
   return React.useMemo(() => {
     if (!watchValues) return false;
-    return fieldKeys.some((k) => {
-      const v = watchValues?.[k];
-      if (v === undefined || v === null) return false;
-      if (typeof v === "string") return v.trim() !== "";
-      if (Array.isArray(v)) return v.length > 0;
+    for (const k of fieldKeys) {
+      const v = (watchValues as any)?.[k];
+      if (v === undefined || v === null) continue;
+      if (typeof v === "string" && v.trim() === "") continue;
+      if (Array.isArray(v) && v.length === 0) continue;
+      if (typeof v === "boolean") return v === true;
       return true;
-    });
+    }
+    return false;
   }, [watchValues, fieldKeys]);
-} = useFormContext();
-  const watchValues = useWatch({ control, name: `${blockPath}.fields` });
-  return React.useMemo(() => {
-    if (!watchValues) return false;
-    return fieldKeys.some((k) => {
-      const v = watchValues?.[k];
-      return !(v === undefined || v === null || String(v).trim() === "");
-    });
-  }, [watchValues, fieldKeys.join("")]);
 }
 
 function FieldRow({ name, label, required, disabledRequired, fullName, type }: any) {
@@ -198,7 +191,7 @@ function FieldRow({ name, label, required, disabledRequired, fullName, type }: a
         render={({ field }) => (
           <FormControlLabel
             control={<Switch checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-            label={label}
+            label={label ?? name}
           />
         )}
       />
@@ -295,9 +288,7 @@ function SchemaForm({ schema }: { schema: Schema }) {
         ))}
         <Stack direction="row" spacing={2}>
           <Button type="submit" variant="contained">Submit</Button>
-          <Button type="button" variant="outlined" onClick={() => methods.reset(defaultValues)}>
-            Reset
-          </Button>
+          <Button type="button" variant="outlined" onClick={() => methods.reset(defaultValues)}>Reset</Button>
         </Stack>
       </Box>
     </FormProvider>
@@ -307,12 +298,7 @@ function SchemaForm({ schema }: { schema: Schema }) {
 export default function NestedFormBuilderDemo() {
   return (
     <Box sx={{ maxWidth: 960, mx: "auto", p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Nested Form Builder (MUI + React Hook Form)
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 2 }}>
-        • Sorted by <code>order</code> • Conditional required per block • Returns identical structure on submit
-      </Typography>
+      <Typography variant="h4" gutterBottom>Form Builder (MUI + React Hook Form)</Typography>
       <SchemaForm schema={exampleSchema as Schema} />
     </Box>
   );
